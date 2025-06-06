@@ -23,7 +23,7 @@ async function getP5CodeFromPrompt(prompt) {
                 role: 'user',
                 parts: [{
                     text: `You are a JavaScript creative coder who only replies with valid p5.js sketches. 
-                    Generate a p5.js sketch (no HTML wrapper) that shows: "${prompt}".
+                    Generate a  sketch (no HTML wrapper) that shows: "${prompt}".
                     
                     Important requirements:
                     1. Only provide the raw JavaScript code with no markdown formatting, code block indicators, or explanations.
