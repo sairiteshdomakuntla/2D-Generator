@@ -73,7 +73,7 @@ export default function Footer({ darkMode }) {
         
         <div className="mt-8 pt-8 border-t border-gray-200 dark:border-gray-700">
           <p className="text-sm text-gray-500 dark:text-gray-400 text-center">
-            &copy; {currentYear} 2D Animator | Powered by <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600 font-medium">Gemini AI</span>
+            &copy; {currentYear} 2D Animator | Powered by <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-500 to-purple-600 font-medium">Sai Ritesh</span>
           </p>
           <p className="mt-2 text-xs text-gray-400 dark:text-gray-500 text-center">
             Create beautiful animations with simple text prompts
