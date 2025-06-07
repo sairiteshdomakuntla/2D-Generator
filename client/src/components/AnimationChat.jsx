@@ -26,24 +26,57 @@ export default function AnimationChat({
   };
   
   return (
-    <div className={`flex flex-col h-full ${darkMode ? 'bg-gray-800' : 'bg-gray-50'}`}>
+    <div className={`flex flex-col h-full ${darkMode ? 'bg-zinc-900' : 'bg-white'} border ${darkMode ? 'border-zinc-800' : 'border-zinc-200'} rounded-lg`}>
+      <div className={`p-3 border-b ${darkMode ? 'border-zinc-800' : 'border-zinc-200'}`}>
+        <h2 className={`font-medium text-sm ${darkMode ? 'text-white' : 'text-zinc-800'}`}>
+          Animation Controls
+        </h2>
+      </div>
+
       <div className="flex-1 overflow-y-auto p-4">
         {messages.length === 0 ? (
-          <div className="h-full flex items-center justify-center text-gray-500 dark:text-gray-400">
-            Start by asking for modifications to your animation
+          <div className="h-full flex flex-col items-center justify-center space-y-3 p-4">
+            <div className={`p-3 rounded-full ${darkMode ? 'bg-zinc-800' : 'bg-zinc-100'}`}>
+              <svg xmlns="http://www.w3.org/2000/svg" className={`h-6 w-6 ${darkMode ? 'text-zinc-400' : 'text-zinc-500'}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+              </svg>
+            </div>
+            <p className={`text-sm text-center ${darkMode ? 'text-zinc-400' : 'text-zinc-600'}`}>
+              Start by asking for modifications to your animation
+            </p>
+            <p className={`text-xs text-center ${darkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>
+              Try "make it move faster" or "change colors to blue"
+            </p>
           </div>
         ) : (
           <div className="space-y-4">
             {messages.map((msg, index) => (
               <div 
                 key={index} 
-                className={`max-w-3/4 ${
+                className={`max-w-[85%] ${
                   msg.role === 'user' 
-                    ? 'ml-auto bg-blue-500 text-white' 
-                    : 'mr-auto bg-gray-200 dark:bg-gray-700 text-gray-900 dark:text-gray-100'
-                } rounded-lg p-3`}
+                    ? 'ml-auto' 
+                    : 'mr-auto'
+                }`}
               >
-                {msg.content}
+                <div className={`rounded-lg p-3 text-sm ${
+                  msg.role === 'user' 
+                    ? darkMode
+                      ? 'bg-zinc-700 text-white' 
+                      : 'bg-zinc-800 text-white'
+                    : darkMode
+                      ? 'bg-zinc-800 text-zinc-200' 
+                      : 'bg-zinc-100 text-zinc-800'
+                }`}>
+                  {msg.content}
+                </div>
+                <p className={`text-xs mt-1 ${
+                  msg.role === 'user'
+                    ? 'text-right'
+                    : ''
+                } ${darkMode ? 'text-zinc-500' : 'text-zinc-500'}`}>
+                  {msg.role === 'user' ? 'You' : 'AI'}
+                </p>
               </div>
             ))}
             <div ref={messagesEndRef} />
@@ -51,37 +84,42 @@ export default function AnimationChat({
         )}
       </div>
       
-      <form onSubmit={handleSubmit} className="border-t border-gray-200 dark:border-gray-700 p-4">
+      <form onSubmit={handleSubmit} className={`border-t border-zinc-200 dark:border-zinc-800 p-4`}>
         <div className="flex items-center">
           <input
             type="text"
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
-            placeholder="Ask for changes to your animation..."
+            placeholder="Type instructions for your animation..."
             disabled={loading}
-            className={`flex-1 rounded-l-lg border-0 py-3 px-4 focus:ring-2 ${
+            className={`flex-1 rounded-l-lg py-2.5 px-4 focus:outline-none text-sm ${
               darkMode 
-                ? 'bg-gray-700 text-white placeholder-gray-400 focus:ring-blue-500' 
-                : 'bg-white text-gray-900 placeholder-gray-500 focus:ring-blue-300'
-            }`}
+                ? 'bg-zinc-800 text-white placeholder-zinc-500 border-zinc-700' 
+                : 'bg-zinc-100 text-zinc-900 placeholder-zinc-500 border-zinc-200'
+            } border border-r-0`}
           />
           <button
             type="submit"
             disabled={!newMessage.trim() || loading}
-            className={`rounded-r-lg px-4 py-3 font-medium ${
+            className={`rounded-r-lg px-4 py-2.5 font-medium text-sm ${
               !newMessage.trim() || loading
-                ? 'bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed'
-                : 'bg-blue-500 hover:bg-blue-600 text-white'
-            }`}
+                ? darkMode
+                  ? 'bg-zinc-800 text-zinc-600 cursor-not-allowed'
+                  : 'bg-zinc-200 text-zinc-400 cursor-not-allowed'
+                : darkMode
+                  ? 'bg-white text-zinc-900 hover:bg-zinc-100'
+                  : 'bg-zinc-900 text-white hover:bg-zinc-800'
+            } transition-colors duration-200`}
           >
             {loading ? (
-              <svg className="animate-spin h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <svg className="animate-spin h-4 w-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
                 <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                 <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
               </svg>
             ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-8.707l-3-3a1 1 0 00-1.414 0l-3 3a1 1 0 001.414 1.414L9 9.414V13a1 1 0 102 0V9.414l1.293 1.293a1 1 0 001.414-1.414z" clipRule="evenodd" />
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="22" y1="2" x2="11" y2="13"></line>
+                <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
               </svg>
             )}
           </button>
