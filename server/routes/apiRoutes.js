@@ -13,6 +13,7 @@ const { getUserCredits, refreshUserCredits, resetCredits } = require('../control
 const verifyToken = require('../middleware/requireAuth');
 const debugMiddleware = require('../middleware/debugMiddleware');
 const { checkCredits, deductCredit } = require('../middleware/creditsMiddleware');
+const { createOrder, verifyPayment, getPlans } = require('../controllers/paymentController');
 
 // Legacy endpoint for backward compatibility
 router.post('/generate-code', debugMiddleware, verifyToken, checkCredits, generateCode, deductCredit);
@@ -31,5 +32,10 @@ router.get('/user/credits', verifyToken, getUserCredits);
 router.post('/user/refresh-credits', verifyToken, refreshUserCredits);
 // Comment out the reset credits endpoint or protect it behind an admin check
 // router.post('/user/reset-credits', verifyToken, resetCredits);
+
+// Payment routes
+router.get('/plans', verifyToken, getPlans);
+router.post('/create-order', verifyToken, createOrder);
+router.post('/verify-payment', verifyToken, verifyPayment);
 
 module.exports = router;

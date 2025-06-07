@@ -65,10 +65,15 @@ exports.createAnimation = async (req, res) => {
       ]
     });
     
+    // Add this right before saving the animation
+    user.credits -= 1;
+    await user.save();
+    
     await animation.save();
     
     // No need to explicitly deduct credit here as it's handled by middleware
     
+    // Also update the response to send the latest credits count
     res.status(201).json({ 
       animation: {
         id: animation._id,
@@ -76,7 +81,7 @@ exports.createAnimation = async (req, res) => {
         code: animation.currentCode,
         messages: animation.messages
       },
-      credits: user.credits // Include updated credits in response
+      credits: user.credits // Make sure this is included
     });
   } catch (error) {
     console.error('Error creating animation:', error);

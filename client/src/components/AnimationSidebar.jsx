@@ -1,30 +1,30 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
+import { useAuth } from '@clerk/clerk-react';
+import axios from 'axios';
 
 export default function AnimationSidebar({ darkMode, currentAnimationId, onSelectAnimation, refreshTrigger }) {
   const [animations, setAnimations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { getToken } = useAuth(); // Use Clerk's useAuth hook to get the getToken function
   
   // Add refreshTrigger to dependency array to fetch animations when it changes
   useEffect(() => {
     const fetchAnimations = async () => {
       try {
         setLoading(true);
-        const token = await window.Clerk.session.getToken();
+        // Use the getToken function from useAuth instead of accessing window.Clerk directly
+        const token = await getToken();
         
-        const response = await fetch('http://localhost:5000/api/animations', {
+        // Using axios for consistency with the rest of your app
+        const response = await axios.get('http://localhost:5000/api/animations', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
         });
         
-        if (!response.ok) {
-          throw new Error('Failed to fetch animations');
-        }
-        
-        const data = await response.json();
-        setAnimations(data.animations);
+        setAnimations(response.data.animations);
       } catch (err) {
         console.error('Error fetching animations:', err);
         setError('Failed to load your animations');
@@ -34,7 +34,7 @@ export default function AnimationSidebar({ darkMode, currentAnimationId, onSelec
     };
     
     fetchAnimations();
-  }, [refreshTrigger]); // Add refreshTrigger dependency
+  }, [refreshTrigger, getToken]); // Add getToken as a dependency
   
   // Format date to readable string
   const formatDate = (dateString) => {

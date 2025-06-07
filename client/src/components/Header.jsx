@@ -1,12 +1,13 @@
 // filepath: d:\proj\video-generator\client\src\components\Header.jsx
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/clerk-react";
 import { useEffect, useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import Credits from './Credits';
 
-export default function Header({ darkMode, setDarkMode, creditsRefreshTrigger }) {
+export default function Header({ darkMode, setDarkMode, creditsRefreshTrigger, onBuyCredits }) {
   const { isSignedIn, user } = useUser();
   const [isScrolled, setIsScrolled] = useState(false);
-  const [menuOpen, setMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   // Handle scroll effect for header
   useEffect(() => {
@@ -20,13 +21,15 @@ export default function Header({ darkMode, setDarkMode, creditsRefreshTrigger })
 
   return (
     <header className={`fixed top-0 left-0 right-0 z-30 ${
-      darkMode ? 'bg-zinc-900 border-b border-zinc-800' : 'bg-white border-b border-zinc-200'
-    }`}>
+      isScrolled 
+        ? darkMode ? 'bg-zinc-900/95 backdrop-blur-sm' : 'bg-white/95 backdrop-blur-sm shadow-sm'
+        : darkMode ? 'bg-zinc-900 border-b border-zinc-800' : 'bg-white border-b border-zinc-200'
+    } transition-all duration-200`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           {/* Logo */}
           <div className="flex items-center">
-            <a href="/" className="flex items-center">
+            <Link to="/" className="flex items-center">
               <svg 
                 xmlns="http://www.w3.org/2000/svg" 
                 className={`h-8 w-8 ${darkMode ? 'text-white' : 'text-zinc-900'}`} 
@@ -43,13 +46,17 @@ export default function Header({ darkMode, setDarkMode, creditsRefreshTrigger })
               <span className={`ml-2 text-xl font-bold ${darkMode ? 'text-white' : 'text-zinc-900'}`}>
                 AnimateAI
               </span>
-            </a>
+            </Link>
           </div>
 
           {/* Right side buttons */}
           <div className="flex items-center space-x-4">
             {/* Credits display (only when signed in) */}
-            {isSignedIn && <Credits darkMode={darkMode} refreshTrigger={creditsRefreshTrigger} />}
+            {isSignedIn && <Credits 
+              darkMode={darkMode} 
+              refreshTrigger={creditsRefreshTrigger}
+              onBuyMore={() => navigate(onBuyCredits)} 
+            />}
             
             {/* Theme Toggle */}
             <button

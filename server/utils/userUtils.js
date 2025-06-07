@@ -6,6 +6,7 @@ exports.findOrCreateUser = async (userId, userEmail = 'user@example.com', userNa
     let user = await User.findOne({ clerkId: userId });
     
     if (!user) {
+      console.log('Creating new user with ID:', userId);
       user = new User({
         clerkId: userId,
         email: userEmail,
@@ -14,11 +15,14 @@ exports.findOrCreateUser = async (userId, userEmail = 'user@example.com', userNa
         lastCreditRefresh: new Date()
       });
       await user.save();
+      console.log('New user created:', user);
     } else if (user.credits === undefined) {
       // If user exists but doesn't have credits field (migration case)
+      console.log('Updating user with missing credits field:', userId);
       user.credits = 10;
       user.lastCreditRefresh = new Date();
       await user.save();
+      console.log('User updated with credits:', user);
     }
     
     return user;
@@ -28,13 +32,14 @@ exports.findOrCreateUser = async (userId, userEmail = 'user@example.com', userNa
   }
 };
 
-// Add a new function to reset a user's credits to check if things are working
+// Function to reset user credits
 exports.resetUserCredits = async (userId) => {
   try {
     const user = await User.findOne({ clerkId: userId });
     if (user) {
       user.credits = 10;
       await user.save();
+      console.log('Reset credits for user:', userId);
       return user;
     }
     return null;

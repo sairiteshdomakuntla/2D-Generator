@@ -1,6 +1,6 @@
 const mongoose = require('mongoose');
 
-const UserSchema = new mongoose.Schema({
+const userSchema = new mongoose.Schema({
   clerkId: {
     type: String,
     required: true,
@@ -10,10 +10,13 @@ const UserSchema = new mongoose.Schema({
     type: String,
     required: true
   },
-  name: String,
+  name: {
+    type: String,
+    default: 'User'
+  },
   credits: {
     type: Number,
-    default: 10 // Start with 10 free credits
+    default: 10
   },
   lastCreditRefresh: {
     type: Date,
@@ -25,4 +28,4 @@ const UserSchema = new mongoose.Schema({
   }
 });
 
-module.exports = mongoose.model('User', UserSchema);
+module.exports = mongoose.model('User', userSchema);
