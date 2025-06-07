@@ -1,6 +1,7 @@
 // filepath: d:\proj\video-generator\client\src\App.jsx
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
+import { useUser, useAuth } from '@clerk/clerk-react';
 import Header from './components/Header';
 import Footer from './components/Footer';
 import PromptInput from './components/PromptInput';
@@ -9,6 +10,8 @@ import AnimationCanvas from './components/AnimationCanvas';
 import ExportedVideo from './components/ExportedVideo';
 
 function App() {
+  const { user } = useUser();
+  const { getToken } = useAuth();
   const [prompt, setPrompt] = useState('');
   const [sketchCode, setSketchCode] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -29,7 +32,7 @@ function App() {
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
     localStorage.setItem('darkMode', darkMode);
-  }, [darkMode]);
+  }, []);
 
   // Clear error message after 5 seconds
   useEffect(() => {
@@ -53,6 +56,52 @@ function App() {
     };
   }, [videoUrl]);
 
+  // Add the missing handleKeyPress function
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter' && !isLoading && !recordingVideo && prompt.trim()) {
+      handleGenerate();
+    }
+  };
+  
+  // Add the missing handleExportVideo function
+  const handleExportVideo = () => {
+    if (recordingVideo || !iframeRef.current) return;
+    
+    setRecordingVideo(true);
+    setError(null);
+    
+    try {
+      // Send message to iframe to start recording
+      iframeRef.current.contentWindow.postMessage({
+        action: 'startRecording',
+        duration: duration * 1000 // Convert to milliseconds
+      }, '*');
+      
+      // Set up listener for when video is ready
+      const handleMessage = (event) => {
+        if (event.data && event.data.action === 'videoReady') {
+          const blob = event.data.videoData;
+          const url = URL.createObjectURL(blob);
+          setVideoUrl(url);
+          setRecordingVideo(false);
+          window.removeEventListener('message', handleMessage);
+        }
+        
+        if (event.data && event.data.action === 'recordingError') {
+          setError(`Recording error: ${event.data.error}`);
+          setRecordingVideo(false);
+          window.removeEventListener('message', handleMessage);
+        }
+      };
+      
+      window.addEventListener('message', handleMessage);
+    } catch (err) {
+      console.error('Error starting video export:', err);
+      setError('Failed to start video export');
+      setRecordingVideo(false);
+    }
+  };
+
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       setError('Please enter a prompt');
@@ -65,11 +114,26 @@ function App() {
     setSketchCode(''); // Clear previous sketch before loading new one
     
     try {
-      const res = await axios.post('http://localhost:5000/api/generate-code', { prompt });
+      // Get the token without specifying a template name
+      const token = await getToken(); // Remove the parameters that are causing the error
+      
+      // Send API request with authentication
+      const res = await axios.post('http://localhost:5000/api/generate-code', 
+        { prompt },
+        { 
+          headers: { 
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          } 
+        }
+      );
+      
       setSketchCode(res.data.code);
     } catch (err) {
       console.error('Error generating sketch:', err);
-      if (err.response && err.response.status === 429) {
+      if (err.response && err.response.status === 401) {
+        setError('Authentication failed. Please sign in again.');
+      } else if (err.response && err.response.status === 429) {
         setError('Rate limit exceeded. Please try again later.');
       } else if (err.response && err.response.data && err.response.data.error) {
         setError(err.response.data.error);
@@ -81,47 +145,8 @@ function App() {
     }
   };
 
-  const handleExportVideo = () => {
-    if (!iframeRef.current) return;
-
-    setRecordingVideo(true);
-    
-    // Send message to iframe to start recording
-    iframeRef.current.contentWindow.postMessage({ 
-      action: 'startRecording',
-      duration: duration * 1000 // Convert to milliseconds
-    }, '*');
-    
-    // Listen for the video data from the iframe
-    window.addEventListener('message', function videoMessageHandler(event) {
-      if (event.data && event.data.action === 'videoReady') {
-        try {
-          // Create a URL for the video blob
-          const videoBlob = new Blob([event.data.videoData], { type: 'video/webm' });
-          const url = URL.createObjectURL(videoBlob);
-          setVideoUrl(url);
-        } catch (err) {
-          console.error('Error creating video:', err);
-          setError('Failed to create video. Please try again.');
-        } finally {
-          setRecordingVideo(false);
-        }
-        
-        // Remove the event listener
-        window.removeEventListener('message', videoMessageHandler);
-      } else if (event.data && event.data.action === 'recordingError') {
-        setError(event.data.error || 'Error recording video');
-        setRecordingVideo(false);
-        window.removeEventListener('message', videoMessageHandler);
-      }
-    });
-  };
-
-  const handleKeyPress = (e) => {
-    if (e.key === 'Enter' && !isLoading && !recordingVideo) {
-      handleGenerate();
-    }
-  };
+  // User greeting
+  const userGreeting = user ? `Hello, ${user.firstName || user.username || 'Creator'}!` : '';
 
   return (
     <div className={`min-h-screen ${darkMode ? 'dark bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-blue-50 to-indigo-50'} transition-all duration-500 ease-in-out`}>
@@ -135,6 +160,12 @@ function App() {
       </div>
 
       <main className="relative z-10 pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+        {userGreeting && (
+          <div className="text-center mb-6">
+            <p className="text-lg text-gray-700 dark:text-gray-300">{userGreeting}</p>
+          </div>
+        )}
+        
         <div className="text-center mb-12">
           <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-500 mb-4">
             Create AI-Powered 2D Animations

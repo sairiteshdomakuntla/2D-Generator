@@ -1,8 +1,10 @@
-const express=require('express');
-const router=express.Router();
+const express = require('express');
+const router = express.Router();
+const { generateCode } = require('../controllers/codeController');
+const verifyToken = require('../middleware/requireAuth');
+const debugMiddleware = require('../middleware/debugMiddleware');
 
-const {generateCode}=require('../controllers/codeController');
+// Add debug middleware first and use the simplified auth middleware
+router.post('/generate-code', debugMiddleware, verifyToken, generateCode);
 
-router.post('/generate-code',generateCode);
-
-module.exports=router;
+module.exports = router;

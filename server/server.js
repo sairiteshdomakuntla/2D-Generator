@@ -1,16 +1,32 @@
-const express=require('express')
-const cors=require('cors')
-const bodyParser=require('body-parser');
-const apiRoutes=require('./routes/apiRoutes');
+require('dotenv').config();
+const express = require('express');
+const cors = require('cors');
+const bodyParser = require('body-parser');
+const apiRoutes = require('./routes/apiRoutes');
 
-const app=express();
-const PORT = 5000;
+const app = express();
+const PORT = process.env.PORT || 5000;
 
-app.use(cors());
-app.use(bodyParser.json());
+// Better CORS configuration to handle preflight requests
+app.use(cors({
+  origin: 'http://localhost:5173', 
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization']
+}));
 
-app.use('/api',apiRoutes);
+// Special handling for Clerk webhooks which need raw body
+app.use((req, res, next) => {
+  if (req.originalUrl === '/api/webhooks/clerk' && 
+      req.method === 'POST') {
+    return next();
+  }
+  bodyParser.json()(req, res, next);
+});
 
-app.listen(PORT,()=>{
-    console.log(`Server is running on port ${PORT}`);
-})
+// API routes
+app.use('/api', apiRoutes);
+
+app.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
