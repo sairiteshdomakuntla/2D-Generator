@@ -50,6 +50,49 @@ async function getP5CodeFromPrompt(prompt) {
     }
 }
 
+// New function to modify existing code based on user instructions
+async function getModifiedCode(existingCode, modificationPrompt) {
+    try {
+        const genParams = {
+            temperature: 0.5, // Lower temperature for more precise modifications
+            maxOutputTokens: 2048,
+        };
+
+        const result = await model.generateContent({
+            contents: [{
+                role: 'user',
+                parts: [{
+                    text: `I have a p5.js sketch that I want to modify. Here's the current code:
+
+${existingCode}
+
+I want to make the following change: "${modificationPrompt}"
+
+Please provide the full modified code with the requested changes. Important requirements:
+1. Only provide the raw JavaScript code with no markdown formatting, code block indicators, or explanations.
+2. Do not use loadStrings(), loadJSON(), loadImage() or any other loading function that requires external files.
+3. Do not use deviceOrientation or accelerometer features.
+4. Maintain the same basic structure but implement the requested changes.
+5. Include both setup() and draw() functions.
+6. Make sure the sketch remains self-contained with no external dependencies.`
+                }]
+            }],
+            generationConfig: genParams
+        });
+
+        const response = await result.response;
+        let code = response.text();
+        
+        // Clean the code
+        code = cleanGeneratedCode(code);
+        
+        return code;
+    } catch (error) {
+        console.error('Error in code modification:', error);
+        throw error;
+    }
+}
+
 // Helper function to clean the generated code
 function cleanGeneratedCode(code) {
     // Remove markdown code block syntax if present
@@ -66,4 +109,4 @@ function cleanGeneratedCode(code) {
     return code;
 }
 
-module.exports = { getP5CodeFromPrompt };
+module.exports = { getP5CodeFromPrompt, getModifiedCode };

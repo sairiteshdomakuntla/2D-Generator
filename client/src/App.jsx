@@ -1,4 +1,256 @@
-// filepath: d:\proj\video-generator\client\src\App.jsx
+// // filepath: d:\proj\video-generator\client\src\App.jsx
+// import { useState, useEffect, useRef } from 'react';
+// import axios from 'axios';
+// import { useUser, useAuth } from '@clerk/clerk-react';
+// import Header from './components/Header';
+// import Footer from './components/Footer';
+// import PromptInput from './components/PromptInput';
+// import ErrorAlert from './components/ErrorAlert';
+// import AnimationCanvas from './components/AnimationCanvas';
+// import ExportedVideo from './components/ExportedVideo';
+
+// function App() {
+//   const { user } = useUser();
+//   const { getToken } = useAuth();
+//   const [prompt, setPrompt] = useState('');
+//   const [sketchCode, setSketchCode] = useState('');
+//   const [isLoading, setIsLoading] = useState(false);
+//   const [error, setError] = useState(null);
+//   const [recordingVideo, setRecordingVideo] = useState(false);
+//   const [videoUrl, setVideoUrl] = useState(null);
+//   const [duration, setDuration] = useState(5);
+//   const [darkMode, setDarkMode] = useState(true);
+//   const errorTimerRef = useRef(null);
+//   const iframeRef = useRef(null);
+
+//   // Handle dark mode
+//   useEffect(() => {
+//     const isDark = localStorage.getItem('darkMode') === 'true';
+//     setDarkMode(isDark !== null ? isDark : true);
+//   }, []);
+
+//   useEffect(() => {
+//     document.documentElement.classList.toggle('dark', darkMode);
+//     localStorage.setItem('darkMode', darkMode);
+//   }, []);
+
+//   // Clear error message after 5 seconds
+//   useEffect(() => {
+//     if (error) {
+//       errorTimerRef.current = setTimeout(() => {
+//         setError(null);
+//       }, 5000);
+//     }
+//     return () => {
+//       if (errorTimerRef.current) clearTimeout(errorTimerRef.current);
+//     };
+//   }, [error]);
+
+//   // Handle cleanup when component unmounts
+//   useEffect(() => {
+//     return () => {
+//       // Clean up any video URLs to prevent memory leaks
+//       if (videoUrl) {
+//         URL.revokeObjectURL(videoUrl);
+//       }
+//     };
+//   }, [videoUrl]);
+
+//   // Add the missing handleKeyPress function
+//   const handleKeyPress = (e) => {
+//     if (e.key === 'Enter' && !isLoading && !recordingVideo && prompt.trim()) {
+//       handleGenerate();
+//     }
+//   };
+  
+//   // Add the missing handleExportVideo function
+//   const handleExportVideo = () => {
+//     if (recordingVideo || !iframeRef.current) return;
+    
+//     setRecordingVideo(true);
+//     setError(null);
+    
+//     try {
+//       // Send message to iframe to start recording
+//       iframeRef.current.contentWindow.postMessage({
+//         action: 'startRecording',
+//         duration: duration * 1000 // Convert to milliseconds
+//       }, '*');
+      
+//       // Set up listener for when video is ready
+//       const handleMessage = (event) => {
+//         if (event.data && event.data.action === 'videoReady') {
+//           const blob = event.data.videoData;
+//           const url = URL.createObjectURL(blob);
+//           setVideoUrl(url);
+//           setRecordingVideo(false);
+//           window.removeEventListener('message', handleMessage);
+//         }
+        
+//         if (event.data && event.data.action === 'recordingError') {
+//           setError(`Recording error: ${event.data.error}`);
+//           setRecordingVideo(false);
+//           window.removeEventListener('message', handleMessage);
+//         }
+//       };
+      
+//       window.addEventListener('message', handleMessage);
+//     } catch (err) {
+//       console.error('Error starting video export:', err);
+//       setError('Failed to start video export');
+//       setRecordingVideo(false);
+//     }
+//   };
+
+//   const handleGenerate = async () => {
+//     if (!prompt.trim()) {
+//       setError('Please enter a prompt');
+//       return;
+//     }
+
+//     setIsLoading(true);
+//     setError(null);
+//     setVideoUrl(null);
+//     setSketchCode(''); // Clear previous sketch before loading new one
+    
+//     try {
+//       // Get the token without specifying a template name
+//       const token = await getToken(); // Remove the parameters that are causing the error
+      
+//       // Send API request with authentication
+//       const res = await axios.post('http://localhost:5000/api/generate-code', 
+//         { prompt },
+//         { 
+//           headers: { 
+//             'Authorization': `Bearer ${token}`,
+//             'Content-Type': 'application/json'
+//           } 
+//         }
+//       );
+      
+//       setSketchCode(res.data.code);
+//     } catch (err) {
+//       console.error('Error generating sketch:', err);
+//       if (err.response && err.response.status === 401) {
+//         setError('Authentication failed. Please sign in again.');
+//       } else if (err.response && err.response.status === 429) {
+//         setError('Rate limit exceeded. Please try again later.');
+//       } else if (err.response && err.response.data && err.response.data.error) {
+//         setError(err.response.data.error);
+//       } else {
+//         setError('Failed to generate animation. Please try again.');
+//       }
+//     } finally {
+//       setIsLoading(false);
+//     }
+//   };
+
+//   // User greeting
+//   const userGreeting = user ? `Hello, ${user.firstName || user.username || 'Creator'}!` : '';
+
+//   return (
+//     <div className={`min-h-screen ${darkMode ? 'dark bg-gradient-to-br from-gray-900 to-gray-800' : 'bg-gradient-to-br from-blue-50 to-indigo-50'} transition-all duration-500 ease-in-out`}>
+//       <Header darkMode={darkMode} setDarkMode={setDarkMode} />
+
+//       {/* Animated background elements */}
+//       <div className="fixed inset-0 overflow-hidden pointer-events-none z-0">
+//         <div className="absolute top-0 left-1/4 w-64 h-64 bg-purple-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob"></div>
+//         <div className="absolute top-0 right-1/3 w-72 h-72 bg-yellow-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-2000"></div>
+//         <div className="absolute -bottom-8 left-1/2 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000"></div>
+//       </div>
+
+//       <main className="relative z-10 pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+//         {userGreeting && (
+//           <div className="text-center mb-6">
+//             <p className="text-lg text-gray-700 dark:text-gray-300">{userGreeting}</p>
+//           </div>
+//         )}
+        
+//         <div className="text-center mb-12">
+//           <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-500 mb-4">
+//             Create AI-Powered 2D Animations
+//           </h1>
+//           <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">
+//             Turn your ideas into beautiful procedural animations with a simple text prompt
+//           </p>
+//         </div>
+
+//         <PromptInput
+//           prompt={prompt}
+//           setPrompt={setPrompt}
+//           handleGenerate={handleGenerate}
+//           isLoading={isLoading}
+//           recordingVideo={recordingVideo}
+//           handleKeyPress={handleKeyPress}
+//         />
+        
+//         <ErrorAlert error={error} setError={setError} />
+        
+//         {sketchCode && !videoUrl && (
+//           <AnimationCanvas 
+//             sketchCode={sketchCode}
+//             darkMode={darkMode}
+//             duration={duration}
+//             setDuration={setDuration}
+//             recordingVideo={recordingVideo}
+//             handleExportVideo={handleExportVideo}
+//             iframeRef={iframeRef}
+//           />
+//         )}
+        
+//         {videoUrl && (
+//           <ExportedVideo
+//             videoUrl={videoUrl}
+//             setVideoUrl={setVideoUrl}
+//             prompt={prompt}
+//             darkMode={darkMode}
+//           />
+//         )}
+
+//         {!sketchCode && !isLoading && (
+//           <div className="mt-16 mb-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+//             <div className={`rounded-xl shadow-lg p-6 text-center ${darkMode ? 'bg-gray-800/50' : 'bg-white/70'} backdrop-blur-sm`}>
+//               <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full mx-auto mb-4 flex items-center justify-center">
+//                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+//                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+//                 </svg>
+//               </div>
+//               <h3 className="text-xl font-bold mb-2">Describe Your Idea</h3>
+//               <p className="text-gray-600 dark:text-gray-400">Use natural language to describe the animation you want to create</p>
+//             </div>
+            
+//             <div className={`rounded-xl shadow-lg p-6 text-center ${darkMode ? 'bg-gray-800/50' : 'bg-white/70'} backdrop-blur-sm`}>
+//               <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full mx-auto mb-4 flex items-center justify-center">
+//                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+//                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+//                 </svg>
+//               </div>
+//               <h3 className="text-xl font-bold mb-2">Generate Animation</h3>
+//               <p className="text-gray-600 dark:text-gray-400">AI creates custom 2D Animations that brings your description to life</p>
+//             </div>
+            
+//             <div className={`rounded-xl shadow-lg p-6 text-center ${darkMode ? 'bg-gray-800/50' : 'bg-white/70'} backdrop-blur-sm`}>
+//               <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full mx-auto mb-4 flex items-center justify-center">
+//                 <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+//                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+//                 </svg>
+//               </div>
+//               <h3 className="text-xl font-bold mb-2">Export & Share</h3>
+//               <p className="text-gray-600 dark:text-gray-400">Download your animation as a video file to use anywhere</p>
+//             </div>
+//           </div>
+//         )}
+//       </main>
+
+//       <Footer darkMode={darkMode} />
+//     </div>
+//   );
+// }
+
+// export default App;
+
+
+
 import { useState, useEffect, useRef } from 'react';
 import axios from 'axios';
 import { useUser, useAuth } from '@clerk/clerk-react';
@@ -8,6 +260,8 @@ import PromptInput from './components/PromptInput';
 import ErrorAlert from './components/ErrorAlert';
 import AnimationCanvas from './components/AnimationCanvas';
 import ExportedVideo from './components/ExportedVideo';
+import AnimationSidebar from './components/AnimationSidebar';
+import AnimationChat from './components/AnimationChat';
 
 function App() {
   const { user } = useUser();
@@ -20,6 +274,9 @@ function App() {
   const [videoUrl, setVideoUrl] = useState(null);
   const [duration, setDuration] = useState(5);
   const [darkMode, setDarkMode] = useState(true);
+  const [currentAnimation, setCurrentAnimation] = useState(null);
+  const [messages, setMessages] = useState([]);
+  const [showSidebar, setShowSidebar] = useState(true);
   const errorTimerRef = useRef(null);
   const iframeRef = useRef(null);
 
@@ -32,7 +289,7 @@ function App() {
   useEffect(() => {
     document.documentElement.classList.toggle('dark', darkMode);
     localStorage.setItem('darkMode', darkMode);
-  }, []);
+  }, [darkMode]);
 
   // Clear error message after 5 seconds
   useEffect(() => {
@@ -56,14 +313,12 @@ function App() {
     };
   }, [videoUrl]);
 
-  // Add the missing handleKeyPress function
   const handleKeyPress = (e) => {
     if (e.key === 'Enter' && !isLoading && !recordingVideo && prompt.trim()) {
       handleGenerate();
     }
   };
   
-  // Add the missing handleExportVideo function
   const handleExportVideo = () => {
     if (recordingVideo || !iframeRef.current) return;
     
@@ -84,6 +339,12 @@ function App() {
           const url = URL.createObjectURL(blob);
           setVideoUrl(url);
           setRecordingVideo(false);
+          
+          // If we have a current animation, save the video URL
+          if (currentAnimation) {
+            saveVideoUrl(currentAnimation.id, url);
+          }
+          
           window.removeEventListener('message', handleMessage);
         }
         
@@ -102,6 +363,20 @@ function App() {
     }
   };
 
+  // Save video URL to the database
+  const saveVideoUrl = async (animationId, url) => {
+    try {
+      const token = await getToken();
+      
+      await axios.put(`http://localhost:5000/api/animations/${animationId}/save-video`, 
+        { videoUrl: url },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+    } catch (err) {
+      console.error('Error saving video URL:', err);
+    }
+  };
+
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       setError('Please enter a prompt');
@@ -115,22 +390,19 @@ function App() {
     
     try {
       // Get the token without specifying a template name
-      const token = await getToken(); // Remove the parameters that are causing the error
+      const token = await getToken();
       
-      // Send API request with authentication
-      const res = await axios.post('http://localhost:5000/api/generate-code', 
+      // Create new animation
+      const res = await axios.post('http://localhost:5000/api/animations', 
         { prompt },
-        { 
-          headers: { 
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          } 
-        }
+        { headers: { 'Authorization': `Bearer ${token}` } }
       );
       
-      setSketchCode(res.data.code);
+      setCurrentAnimation(res.data.animation);
+      setSketchCode(res.data.animation.code);
+      setMessages(res.data.animation.messages);
     } catch (err) {
-      console.error('Error generating sketch:', err);
+      console.error('Error generating animation:', err);
       if (err.response && err.response.status === 401) {
         setError('Authentication failed. Please sign in again.');
       } else if (err.response && err.response.status === 429) {
@@ -143,6 +415,78 @@ function App() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Handle selecting an animation from the sidebar
+  const handleSelectAnimation = async (animationId) => {
+    if (animationId === 'new') {
+      setCurrentAnimation(null);
+      setSketchCode('');
+      setMessages([]);
+      setVideoUrl(null);
+      return;
+    }
+    
+    try {
+      setIsLoading(true);
+      const token = await getToken();
+      
+      const res = await axios.get(`http://localhost:5000/api/animations/${animationId}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+      
+      const animation = res.data.animation;
+      setCurrentAnimation({
+        id: animation._id,
+        title: animation.title,
+        code: animation.currentCode
+      });
+      setSketchCode(animation.currentCode);
+      setMessages(animation.messages);
+      setVideoUrl(animation.videoUrl || null);
+    } catch (err) {
+      console.error('Error loading animation:', err);
+      setError('Failed to load animation');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Handle sending a chat message to modify the animation
+  const handleSendMessage = async (messageContent) => {
+    if (!currentAnimation || !messageContent.trim()) return;
+    
+    try {
+      setIsLoading(true);
+      
+      // Add user message immediately for better UX
+      setMessages(prev => [...prev, { role: 'user', content: messageContent }]);
+      
+      const token = await getToken();
+      
+      // Send message to API to modify animation
+      const res = await axios.put(`http://localhost:5000/api/animations/${currentAnimation.id}/modify`, 
+        { prompt: messageContent },
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+      
+      // Update with the complete message history from the server
+      setMessages(res.data.animation.messages);
+      setSketchCode(res.data.animation.code);
+    } catch (err) {
+      console.error('Error modifying animation:', err);
+      setError('Failed to modify animation');
+      
+      // Remove the temporary user message if there was an error
+      setMessages(prev => prev.filter((_, index) => index !== prev.length - 1));
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Toggle sidebar visibility
+  const toggleSidebar = () => {
+    setShowSidebar(prev => !prev);
   };
 
   // User greeting
@@ -159,89 +503,140 @@ function App() {
         <div className="absolute -bottom-8 left-1/2 w-80 h-80 bg-pink-500 rounded-full mix-blend-multiply filter blur-3xl opacity-10 animate-blob animation-delay-4000"></div>
       </div>
 
-      <main className="relative z-10 pt-24 pb-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-        {userGreeting && (
-          <div className="text-center mb-6">
-            <p className="text-lg text-gray-700 dark:text-gray-300">{userGreeting}</p>
-          </div>
-        )}
+      <div className="relative z-10 pt-16 min-h-[calc(100vh-64px)]">
+        {/* Sidebar toggle button for mobile */}
+        <button 
+          onClick={toggleSidebar}
+          className="md:hidden fixed z-20 top-20 left-2 bg-blue-500 text-white p-2 rounded-full"
+        >
+          {showSidebar ? (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          ) : (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          )}
+        </button>
         
-        <div className="text-center mb-12">
-          <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-500 mb-4">
-            Create AI-Powered 2D Animations
-          </h1>
-          <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">
-            Turn your ideas into beautiful procedural animations with a simple text prompt
-          </p>
+        <div className="flex h-[calc(100vh-64px)]">
+          {/* Sidebar */}
+          <div className={`${
+            showSidebar 
+              ? 'translate-x-0 md:w-72 w-full fixed md:relative z-10' 
+              : '-translate-x-full hidden md:block md:w-0'
+            } transition-all duration-300 ease-in-out`}>
+            <AnimationSidebar 
+              darkMode={darkMode} 
+              currentAnimationId={currentAnimation?.id}
+              onSelectAnimation={handleSelectAnimation} 
+            />
+          </div>
+          
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 px-4 py-6 md:px-8 overflow-y-auto">
+              {userGreeting && (
+                <div className="text-center mb-6">
+                  <p className="text-lg text-gray-700 dark:text-gray-300">{userGreeting}</p>
+                </div>
+              )}
+              
+              <ErrorAlert error={error} setError={setError} />
+              
+              {!currentAnimation && !sketchCode ? (
+                <div className="max-w-3xl mx-auto">
+                  <div className="text-center mb-12">
+                    <h1 className="text-4xl md:text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 dark:from-blue-400 dark:to-purple-500 mb-4">
+                      Create AI-Powered 2D Animations
+                    </h1>
+                    <p className="text-lg md:text-xl text-gray-700 dark:text-gray-300 max-w-3xl mx-auto">
+                      Turn your ideas into beautiful procedural animations with a simple text prompt
+                    </p>
+                  </div>
+                  
+                  <PromptInput
+                    prompt={prompt}
+                    setPrompt={setPrompt}
+                    handleGenerate={handleGenerate}
+                    isLoading={isLoading}
+                    recordingVideo={recordingVideo}
+                    handleKeyPress={handleKeyPress}
+                  />
+                  
+                  <div className="mt-16 mb-12 grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div className={`rounded-xl shadow-lg p-6 text-center ${darkMode ? 'bg-gray-800/50' : 'bg-white/70'} backdrop-blur-sm`}>
+                      <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">Describe Your Idea</h3>
+                      <p className="text-gray-600 dark:text-gray-400">Use natural language to describe the animation you want to create</p>
+                    </div>
+                    
+                    <div className={`rounded-xl shadow-lg p-6 text-center ${darkMode ? 'bg-gray-800/50' : 'bg-white/70'} backdrop-blur-sm`}>
+                      <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">Generate Animation</h3>
+                      <p className="text-gray-600 dark:text-gray-400">AI creates custom 2D Animations that brings your description to life</p>
+                    </div>
+                    
+                    <div className={`rounded-xl shadow-lg p-6 text-center ${darkMode ? 'bg-gray-800/50' : 'bg-white/70'} backdrop-blur-sm`}>
+                      <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full mx-auto mb-4 flex items-center justify-center">
+                        <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                        </svg>
+                      </div>
+                      <h3 className="text-xl font-bold mb-2">Export & Share</h3>
+                      <p className="text-gray-600 dark:text-gray-400">Download your animation as a video file to use anywhere</p>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col md:flex-row gap-4 h-full">
+                  {/* Animation display */}
+                  <div className="md:w-2/3">
+                    {sketchCode && !videoUrl && (
+                      <AnimationCanvas 
+                        sketchCode={sketchCode}
+                        darkMode={darkMode}
+                        duration={duration}
+                        setDuration={setDuration}
+                        recordingVideo={recordingVideo}
+                        handleExportVideo={handleExportVideo}
+                        iframeRef={iframeRef}
+                      />
+                    )}
+                    
+                    {videoUrl && (
+                      <ExportedVideo
+                        videoUrl={videoUrl}
+                        setVideoUrl={setVideoUrl}
+                        prompt={currentAnimation?.title || prompt}
+                        darkMode={darkMode}
+                      />
+                    )}
+                  </div>
+                  
+                  {/* Chat interface */}
+                  <div className="md:w-1/3 h-[600px] rounded-lg overflow-hidden shadow-lg">
+                    <AnimationChat 
+                      darkMode={darkMode} 
+                      messages={messages}
+                      onSendMessage={handleSendMessage}
+                      loading={isLoading}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
-
-        <PromptInput
-          prompt={prompt}
-          setPrompt={setPrompt}
-          handleGenerate={handleGenerate}
-          isLoading={isLoading}
-          recordingVideo={recordingVideo}
-          handleKeyPress={handleKeyPress}
-        />
-        
-        <ErrorAlert error={error} setError={setError} />
-        
-        {sketchCode && !videoUrl && (
-          <AnimationCanvas 
-            sketchCode={sketchCode}
-            darkMode={darkMode}
-            duration={duration}
-            setDuration={setDuration}
-            recordingVideo={recordingVideo}
-            handleExportVideo={handleExportVideo}
-            iframeRef={iframeRef}
-          />
-        )}
-        
-        {videoUrl && (
-          <ExportedVideo
-            videoUrl={videoUrl}
-            setVideoUrl={setVideoUrl}
-            prompt={prompt}
-            darkMode={darkMode}
-          />
-        )}
-
-        {!sketchCode && !isLoading && (
-          <div className="mt-16 mb-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className={`rounded-xl shadow-lg p-6 text-center ${darkMode ? 'bg-gray-800/50' : 'bg-white/70'} backdrop-blur-sm`}>
-              <div className="w-16 h-16 bg-blue-100 dark:bg-blue-900/30 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-2">Describe Your Idea</h3>
-              <p className="text-gray-600 dark:text-gray-400">Use natural language to describe the animation you want to create</p>
-            </div>
-            
-            <div className={`rounded-xl shadow-lg p-6 text-center ${darkMode ? 'bg-gray-800/50' : 'bg-white/70'} backdrop-blur-sm`}>
-              <div className="w-16 h-16 bg-purple-100 dark:bg-purple-900/30 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-purple-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19.428 15.428a2 2 0 00-1.022-.547l-2.387-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-2">Generate Animation</h3>
-              <p className="text-gray-600 dark:text-gray-400">AI creates custom 2D Animations that brings your description to life</p>
-            </div>
-            
-            <div className={`rounded-xl shadow-lg p-6 text-center ${darkMode ? 'bg-gray-800/50' : 'bg-white/70'} backdrop-blur-sm`}>
-              <div className="w-16 h-16 bg-green-100 dark:bg-green-900/30 rounded-full mx-auto mb-4 flex items-center justify-center">
-                <svg xmlns="http://www.w3.org/2000/svg" className="h-8 w-8 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
-                </svg>
-              </div>
-              <h3 className="text-xl font-bold mb-2">Export & Share</h3>
-              <p className="text-gray-600 dark:text-gray-400">Download your animation as a video file to use anywhere</p>
-            </div>
-          </div>
-        )}
-      </main>
-
+      </div>
       <Footer darkMode={darkMode} />
     </div>
   );
