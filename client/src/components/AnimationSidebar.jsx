@@ -14,10 +14,8 @@ export default function AnimationSidebar({ darkMode, currentAnimationId, onSelec
     const fetchAnimations = async () => {
       try {
         setLoading(true);
-        // Use the getToken function from useAuth instead of accessing window.Clerk directly
         const token = await getToken();
         
-        // Using axios for consistency with the rest of your app
         const response = await axios.get('http://localhost:5000/api/animations', {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -26,6 +24,7 @@ export default function AnimationSidebar({ darkMode, currentAnimationId, onSelec
         
         setAnimations(response.data.animations);
       } catch (err) {
+        // Keep this error log as it's useful for troubleshooting
         console.error('Error fetching animations:', err);
         setError('Failed to load your animations');
       } finally {

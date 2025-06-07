@@ -56,9 +56,7 @@ exports.createOrder = async (req, res) => {
       }
     };
     
-    console.log('Creating order with options:', options);
     const order = await razorpay.orders.create(options);
-    console.log('Order created:', order);
     
     res.json({ 
       order_id: order.id,
@@ -75,7 +73,6 @@ exports.createOrder = async (req, res) => {
 // Verify payment and add credits
 exports.verifyPayment = async (req, res) => {
   try {
-    console.log('Verifying payment, request body:', req.body);
     const { razorpay_order_id, razorpay_payment_id, razorpay_signature, planId } = req.body;
     
     if (!razorpay_order_id || !razorpay_payment_id || !razorpay_signature || !planId) {
@@ -90,7 +87,6 @@ exports.verifyPayment = async (req, res) => {
       .digest('hex');
     
     const isAuthentic = expectedSignature === razorpay_signature;
-    console.log('Signature check:', { expected: expectedSignature, received: razorpay_signature, isAuthentic });
     
     if (!isAuthentic) {
       return res.status(400).json({ error: 'Invalid payment signature' });
@@ -104,7 +100,6 @@ exports.verifyPayment = async (req, res) => {
     
     // Find user and add credits
     const user = await findOrCreateUser(req.userId);
-    console.log('User before adding credits:', user);
     
     // Make sure credits property exists
     if (typeof user.credits !== 'number') {
@@ -114,8 +109,6 @@ exports.verifyPayment = async (req, res) => {
     // Add credits based on plan
     user.credits += plan.credits;
     await user.save();
-    
-    console.log('User after adding credits:', user);
     
     // Respond with success
     res.json({ 

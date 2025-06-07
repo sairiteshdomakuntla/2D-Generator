@@ -32,14 +32,9 @@ const deductCredit = async (req, res, next) => {
       req.user = await findOrCreateUser(req.userId);
     }
     
-    // Log before deduction
-    console.log(`Deducting credit for user ${req.userId}. Current credits: ${req.user.credits}`);
-    
     // Deduct a credit
     req.user.credits -= 1;
     await req.user.save();
-    
-    console.log(`Credits after deduction: ${req.user.credits}`);
     
     // Continue with the request
     next();

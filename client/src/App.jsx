@@ -130,6 +130,7 @@ function App() {
     }
   };
 
+  // Clean up handleGenerate function by removing console logs
   const handleGenerate = async () => {
     if (!prompt.trim()) {
       setError('Please enter a prompt');
@@ -154,12 +155,7 @@ function App() {
       setSketchCode(res.data.animation.code);
       setMessages(res.data.animation.messages);
       
-      // Explicitly check if credits are returned from the API and force refresh
-      if (res.data.credits !== undefined) {
-        console.log(`Credits updated from server: ${res.data.credits}`);
-      }
-      
-      // Force a credits refresh regardless
+      // Force a credits refresh
       setCreditsRefreshTrigger(prev => prev + 1);
       setSidebarRefreshTrigger(prev => prev + 1);
     } catch (err) {
@@ -209,7 +205,7 @@ function App() {
     }
   };
 
-  // Handle sending a chat message to modify the animation
+  // Clean up handleSendMessage function
   const handleSendMessage = async (messageContent) => {
     if (!currentAnimation || !messageContent.trim()) return;
     
@@ -230,12 +226,7 @@ function App() {
       setMessages(res.data.animation.messages);
       setSketchCode(res.data.animation.code);
       
-      // Explicitly check if credits are returned from the API
-      if (res.data.credits !== undefined) {
-        console.log(`Credits updated after modification: ${res.data.credits}`);
-      }
-      
-      // Force a credits refresh regardless
+      // Force a credits refresh
       setCreditsRefreshTrigger(prev => prev + 1);
     } catch (err) {
       console.error('Error modifying animation:', err);
@@ -260,9 +251,9 @@ function App() {
   // User greeting
   const userGreeting = user ? `Hello, ${user.firstName || user.username || 'Creator'}!` : '';
 
-  // Add a function to handle credit purchase completion
+  // Clean up handleCreditsPurchased function
   const handleCreditsPurchased = async (newCreditCount) => {
-    console.log('Credits purchased! New count:', newCreditCount);
+    // Remove console.log
     // Force refresh sidebar and credits
     setSidebarRefreshTrigger(prev => prev + 1);
     setCreditsRefreshTrigger(prev => prev + 1);

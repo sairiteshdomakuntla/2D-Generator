@@ -75,8 +75,6 @@ export default function PurchaseCredits({ darkMode, onPurchaseComplete }) {
                 { headers: { 'Authorization': `Bearer ${token}` } }
               );
               
-              console.log('Verification response:', verifyRes.data);
-              
               if (verifyRes.data.success) {
                 setPurchaseStatus('success');
                 setTimeout(() => {
