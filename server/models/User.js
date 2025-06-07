@@ -11,6 +11,14 @@ const UserSchema = new mongoose.Schema({
     required: true
   },
   name: String,
+  credits: {
+    type: Number,
+    default: 10 // Start with 10 free credits
+  },
+  lastCreditRefresh: {
+    type: Date,
+    default: Date.now
+  },
   createdAt: {
     type: Date,
     default: Date.now

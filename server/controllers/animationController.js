@@ -1,28 +1,7 @@
 const Animation = require('../models/Animation');
-const User = require('../models/User');
+const { findOrCreateUser } = require('../utils/userUtils');
 const { getP5CodeFromPrompt } = require('../services/geminiService');
 const { getModifiedCode } = require('../services/geminiService');
-
-// Helper function to find or create user
-const findOrCreateUser = async (userId, userEmail = 'user@example.com', userName = 'User') => {
-  try {
-    let user = await User.findOne({ clerkId: userId });
-    
-    if (!user) {
-      user = new User({
-        clerkId: userId,
-        email: userEmail,
-        name: userName
-      });
-      await user.save();
-    }
-    
-    return user;
-  } catch (error) {
-    console.error('Error in findOrCreateUser:', error);
-    throw error;
-  }
-};
 
 // Get all animations for a user
 exports.getAnimations = async (req, res) => {
@@ -68,7 +47,8 @@ exports.createAnimation = async (req, res) => {
       return res.status(400).json({ error: 'Valid prompt is required' });
     }
     
-    const user = await findOrCreateUser(req.userId);
+    // Use provided user from middleware instead of finding/creating again
+    const user = req.user;
     
     // Generate code from prompt
     const code = await getP5CodeFromPrompt(prompt);
@@ -87,13 +67,16 @@ exports.createAnimation = async (req, res) => {
     
     await animation.save();
     
+    // No need to explicitly deduct credit here as it's handled by middleware
+    
     res.status(201).json({ 
       animation: {
         id: animation._id,
         title: animation.title,
         code: animation.currentCode,
         messages: animation.messages
-      } 
+      },
+      credits: user.credits // Include updated credits in response
     });
   } catch (error) {
     console.error('Error creating animation:', error);
@@ -128,6 +111,17 @@ exports.modifyAnimation = async (req, res) => {
       return res.status(400).json({ error: 'Valid modification prompt is required' });
     }
     
+    // Get the user directly
+    const user = await findOrCreateUser(req.userId);
+    
+    // Check credits here directly
+    if (user.credits <= 0) {
+      return res.status(403).json({ 
+        error: 'Insufficient credits', 
+        message: 'You have run out of credits. Please purchase more to continue.'
+      });
+    }
+    
     // Find the animation
     const animation = await Animation.findById(id);
     if (!animation) {
@@ -142,15 +136,19 @@ exports.modifyAnimation = async (req, res) => {
     animation.messages.push({ role: 'user', content: prompt });
     animation.messages.push({ role: 'system', content: 'Modified animation based on request' });
     animation.updatedAt = Date.now();
-    
     await animation.save();
+    
+    // Deduct credit
+    user.credits -= 1;
+    await user.save();
     
     res.json({ 
       animation: {
         id: animation._id,
         code: animation.currentCode,
         messages: animation.messages
-      }
+      },
+      credits: user.credits // Include updated credits in response
     });
   } catch (error) {
     console.error('Error modifying animation:', error);

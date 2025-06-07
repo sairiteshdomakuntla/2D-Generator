@@ -5,6 +5,7 @@ import Header from './components/Header';
 import Footer from './components/Footer';
 import PromptInput from './components/PromptInput';
 import ErrorAlert from './components/ErrorAlert';
+import CreditAlert from './components/CreditAlert';
 import AnimationCanvas from './components/AnimationCanvas';
 import ExportedVideo from './components/ExportedVideo';
 import AnimationSidebar from './components/AnimationSidebar';
@@ -27,6 +28,7 @@ function App() {
   const errorTimerRef = useRef(null);
   const iframeRef = useRef(null);
   const [sidebarRefreshTrigger, setSidebarRefreshTrigger] = useState(0);
+  const [creditsRefreshTrigger, setCreditsRefreshTrigger] = useState(0);
 
   // Handle dark mode
   useEffect(() => {
@@ -137,7 +139,6 @@ function App() {
     setSketchCode(''); // Clear previous sketch before loading new one
     
     try {
-      // Get the token without specifying a template name
       const token = await getToken();
       
       // Create new animation
@@ -149,18 +150,16 @@ function App() {
       setCurrentAnimation(res.data.animation);
       setSketchCode(res.data.animation.code);
       setMessages(res.data.animation.messages);
-
+      
+      // Force a credits refresh
+      setCreditsRefreshTrigger(prev => prev + 1);
       setSidebarRefreshTrigger(prev => prev + 1);
     } catch (err) {
       console.error('Error generating animation:', err);
-      if (err.response && err.response.status === 401) {
-        setError('Authentication failed. Please sign in again.');
-      } else if (err.response && err.response.status === 429) {
-        setError('Rate limit exceeded. Please try again later.');
-      } else if (err.response && err.response.data && err.response.data.error) {
+      if (err.response && err.response.data && err.response.data.error) {
         setError(err.response.data.error);
       } else {
-        setError('Failed to generate animation. Please try again.');
+        setError('Failed to generate animation');
       }
     } finally {
       setIsLoading(false);
@@ -220,9 +219,11 @@ function App() {
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
       
-      // Update with the complete message history from the server
       setMessages(res.data.animation.messages);
       setSketchCode(res.data.animation.code);
+      
+      // Force a credits refresh
+      setCreditsRefreshTrigger(prev => prev + 1);
     } catch (err) {
       console.error('Error modifying animation:', err);
       setError('Failed to modify animation');
@@ -242,27 +243,39 @@ function App() {
   // User greeting
   const userGreeting = user ? `Hello, ${user.firstName || user.username || 'Creator'}!` : '';
 
+  // Add a function to handle credit purchase completion
+  const handleCreditsPurchased = async () => {
+    // Refresh the sidebar to show updated list
+    setSidebarRefreshTrigger(prev => prev + 1);
+    // Refresh credits display
+    setCreditsRefreshTrigger(prev => prev + 1);
+  };
+  
   return (
     <div className={`min-h-screen ${darkMode ? 'dark bg-zinc-900' : 'bg-zinc-50'} transition-all duration-300 ease-in-out`}>
-      <Header darkMode={darkMode} setDarkMode={setDarkMode} />
+      <Header 
+        darkMode={darkMode} 
+        setDarkMode={setDarkMode} 
+        creditsRefreshTrigger={creditsRefreshTrigger}
+      />
 
       <div className="relative z-10 pt-16 min-h-[calc(100vh-64px)]">
         {/* Sidebar toggle button for mobile */}
         <button 
           onClick={toggleSidebar}
-          className="md:hidden fixed z-20 top-20 left-2 bg-zinc-800 dark:bg-zinc-700 text-white p-2 rounded-full"
+          className="md:hidden fixed top-20 left-4 z-20 p-2 rounded-md bg-zinc-200 dark:bg-zinc-800 text-zinc-800 dark:text-white"
         >
           {showSidebar ? (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
           ) : (
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
             </svg>
           )}
         </button>
-        
+  
         <div className="flex h-[calc(100vh-64px)]">
           {/* Sidebar */}
           <div className={`${
@@ -287,7 +300,13 @@ function App() {
               )}
               
               <ErrorAlert error={error} setError={setError} />
-              
+              <CreditAlert 
+                error={error} 
+                setError={setError} 
+                darkMode={darkMode} 
+                onCreditsPurchased={handleCreditsPurchased} 
+              />
+
               {!currentAnimation && !sketchCode ? (
   <div className="max-w-4xl mx-auto">
     <div className="text-center mb-16">

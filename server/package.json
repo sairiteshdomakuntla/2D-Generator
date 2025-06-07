@@ -22,6 +22,7 @@
     "mongoose": "^8.15.1",
     "nodemon": "^3.1.10",
     "puppeteer": "^24.10.0",
+    "razorpay": "^2.9.6",
     "svix": "^1.67.0"
   }
 }

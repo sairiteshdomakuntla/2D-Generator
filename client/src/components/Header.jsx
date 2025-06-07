@@ -1,7 +1,9 @@
+// filepath: d:\proj\video-generator\client\src\components\Header.jsx
 import { SignInButton, SignUpButton, UserButton, useUser } from "@clerk/clerk-react";
 import { useEffect, useState } from 'react';
+import Credits from './Credits';
 
-export default function Header({ darkMode, setDarkMode }) {
+export default function Header({ darkMode, setDarkMode, creditsRefreshTrigger }) {
   const { isSignedIn, user } = useUser();
   const [isScrolled, setIsScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -46,6 +48,9 @@ export default function Header({ darkMode, setDarkMode }) {
 
           {/* Right side buttons */}
           <div className="flex items-center space-x-4">
+            {/* Credits display (only when signed in) */}
+            {isSignedIn && <Credits darkMode={darkMode} refreshTrigger={creditsRefreshTrigger} />}
+            
             {/* Theme Toggle */}
             <button
               onClick={() => setDarkMode(!darkMode)}
