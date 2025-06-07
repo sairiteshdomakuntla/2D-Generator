@@ -1,31 +1,41 @@
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
-// Skip the Clerk SDK middleware and implement a simpler verification
-const verifyToken = (req, res, next) => {
+// Helper function to properly format the public key
+function formatPublicKey(keyString) {
+  if (keyString.includes("-----BEGIN PUBLIC KEY-----") && !keyString.includes("\\n")) {
+    // The key is already properly formatted with real newlines
+    return keyString;
+  }
+  
+  // Replace \\n with actual newlines if needed
+  return keyString.replace(/\\n/g, '\n');
+}
+
+module.exports = (req, res, next) => {
   try {
-    // Get token from authorization header
+    // Get token from Authorization header
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      console.log('No token provided');
-      return res.status(401).json({ error: 'No authentication token provided' });
+      return res.status(401).json({ error: 'No token provided' });
     }
     
-    // Extract token
     const token = authHeader.split(' ')[1];
     
-    // For development purposes, simply pass the authentication
-    // Skip the verification since we're having issues with Clerk's JWTs
-    // console.log('Authentication successful - development mode');
+    // Format the public key correctly
+    const publicKey = formatPublicKey(process.env.CLERK_JWT_KEY);
     
-    // Add a mock user ID to the request
-    req.userId = 'user_development';
+    // Verify token using the public key
+    const decoded = jwt.verify(token, publicKey, {
+      algorithms: ['RS256']
+    });
+    
+    // Set the userId on the request object for use in route handlers
+    req.userId = decoded.sub; // 'sub' is the Clerk User ID
     
     next();
   } catch (error) {
-    console.error('Token verification failed:', error);
-    return res.status(401).json({ error: 'Invalid authentication token' });
+    console.error('Auth error:', error);
+    return res.status(401).json({ error: 'Invalid or expired token' });
   }
 };
-
-module.exports = verifyToken;

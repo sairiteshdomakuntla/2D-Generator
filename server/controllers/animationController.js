@@ -27,8 +27,10 @@ const findOrCreateUser = async (userId, userEmail = 'user@example.com', userName
 // Get all animations for a user
 exports.getAnimations = async (req, res) => {
   try {
+    // Get the current user by Clerk ID
     const user = await findOrCreateUser(req.userId);
     
+    // Find animations belonging only to this user
     const animations = await Animation.find({ user: user._id })
       .sort({ updatedAt: -1 })
       .select('title initialPrompt thumbnail updatedAt');

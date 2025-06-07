@@ -1,14 +1,16 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 
-export default function AnimationSidebar({ darkMode, currentAnimationId, onSelectAnimation }) {
+export default function AnimationSidebar({ darkMode, currentAnimationId, onSelectAnimation, refreshTrigger }) {
   const [animations, setAnimations] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   
+  // Add refreshTrigger to dependency array to fetch animations when it changes
   useEffect(() => {
     const fetchAnimations = async () => {
       try {
+        setLoading(true);
         const token = await window.Clerk.session.getToken();
         
         const response = await fetch('http://localhost:5000/api/animations', {
@@ -32,7 +34,7 @@ export default function AnimationSidebar({ darkMode, currentAnimationId, onSelec
     };
     
     fetchAnimations();
-  }, []);
+  }, [refreshTrigger]); // Add refreshTrigger dependency
   
   // Format date to readable string
   const formatDate = (dateString) => {

@@ -26,6 +26,7 @@ function App() {
   const [showSidebar, setShowSidebar] = useState(true);
   const errorTimerRef = useRef(null);
   const iframeRef = useRef(null);
+  const [sidebarRefreshTrigger, setSidebarRefreshTrigger] = useState(0);
 
   // Handle dark mode
   useEffect(() => {
@@ -148,6 +149,8 @@ function App() {
       setCurrentAnimation(res.data.animation);
       setSketchCode(res.data.animation.code);
       setMessages(res.data.animation.messages);
+
+      setSidebarRefreshTrigger(prev => prev + 1);
     } catch (err) {
       console.error('Error generating animation:', err);
       if (err.response && err.response.status === 401) {
@@ -267,11 +270,12 @@ function App() {
               ? 'translate-x-0 md:w-72 w-full fixed md:relative z-10' 
               : '-translate-x-full hidden md:block md:w-0'
             } transition-all duration-300 ease-in-out`}>
-            <AnimationSidebar 
-              darkMode={darkMode} 
-              currentAnimationId={currentAnimation?.id}
-              onSelectAnimation={handleSelectAnimation} 
-            />
+                <AnimationSidebar 
+                  darkMode={darkMode} 
+                  currentAnimationId={currentAnimation?.id}
+                  onSelectAnimation={handleSelectAnimation}
+                  refreshTrigger={sidebarRefreshTrigger}
+                />
           </div>
           
           <div className="flex-1 flex flex-col overflow-hidden">
