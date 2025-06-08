@@ -10,13 +10,13 @@ exports.findOrCreateUser = async (userId, userEmail = 'user@example.com', userNa
         clerkId: userId,
         email: userEmail,
         name: userName,
-        credits: 10, // Start with 10 free credits
+        credits: 20, // Changed from 10 to 20 free credits
         lastCreditRefresh: new Date()
       });
       await user.save();
     } else if (user.credits === undefined) {
       // If user exists but doesn't have credits field (migration case)
-      user.credits = 10;
+      user.credits = 20; // Changed from 10 to 20
       user.lastCreditRefresh = new Date();
       await user.save();
     }

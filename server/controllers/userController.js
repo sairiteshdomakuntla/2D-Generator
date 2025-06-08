@@ -4,6 +4,11 @@ const { findOrCreateUser, resetUserCredits } = require('../utils/userUtils');
 // Get user credits
 exports.getUserCredits = async (req, res) => {
   try {
+    if (!req.userId) {
+      return res.status(400).json({ error: 'Missing user ID' });
+    }
+    
+    console.log('Finding user with clerk ID:', req.userId);
     const user = await findOrCreateUser(req.userId);
     
     // Check if it's a new month and we should refresh credits
@@ -12,7 +17,12 @@ exports.getUserCredits = async (req, res) => {
     res.json({ credits: user.credits });
   } catch (error) {
     console.error('Error getting user credits:', error);
-    res.status(500).json({ error: 'Failed to get user credits' });
+    // More detailed error response
+    res.status(500).json({ 
+      error: 'Failed to get user credits', 
+      message: error.message,
+      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+    });
   }
 };
 
