@@ -121,7 +121,7 @@ function App() {
     try {
       const token = await getToken();
       
-      await axios.put(`http://localhost:5000/api/animations/${animationId}/save-video`, 
+      await axios.put(`${import.meta.env.VITE_API_URL}/api/animations/${animationId}/save-video`, 
         { videoUrl: url },
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
@@ -146,7 +146,7 @@ function App() {
       const token = await getToken();
       
       // Create new animation
-      const res = await axios.post('http://localhost:5000/api/animations', 
+      const res = await axios.post(`${import.meta.env.VITE_API_URL}/api/animations`, 
         { prompt },
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
@@ -184,7 +184,7 @@ function App() {
       setIsLoading(true);
       const token = await getToken();
       
-      const res = await axios.get(`http://localhost:5000/api/animations/${animationId}`, {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/animations/${animationId}`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
@@ -218,7 +218,7 @@ function App() {
       const token = await getToken();
       
       // Send message to API to modify animation
-      const res = await axios.put(`http://localhost:5000/api/animations/${currentAnimation.id}/modify`, 
+      const res = await axios.put(`${import.meta.env.VITE_API_URL}/api/animations/${currentAnimation.id}/modify`, 
         { prompt: messageContent },
         { headers: { 'Authorization': `Bearer ${token}` } }
       );

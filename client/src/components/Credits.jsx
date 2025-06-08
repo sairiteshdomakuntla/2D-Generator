@@ -15,7 +15,7 @@ export default function Credits({ darkMode, refreshTrigger, onBuyMore }) {
       setLoading(true);
       const token = await getToken();
       
-      const res = await axios.get('http://localhost:5000/api/user/credits', {
+      const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/credits`, {
         headers: { 'Authorization': `Bearer ${token}` }
       });
       
