@@ -15,7 +15,7 @@ export default function CreditPurchaseModal({ isOpen, onClose, darkMode, onPurch
     const fetchPlans = async () => {
       try {
         const token = await getToken();
-        const res = await axios.get('http://localhost:5000/api/plans', {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/plans`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         setPlans(res.data.plans);
@@ -39,7 +39,7 @@ export default function CreditPurchaseModal({ isOpen, onClose, darkMode, onPurch
       const token = await getToken();
       
       // Create Razorpay order
-      const orderRes = await axios.post('http://localhost:5000/api/create-order', 
+      const orderRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/create-order`, 
         { planId: selectedPlan },
         { headers: { 'Authorization': `Bearer ${token}` } }
       );
@@ -62,10 +62,8 @@ export default function CreditPurchaseModal({ isOpen, onClose, darkMode, onPurch
           order_id: order_id,
           handler: async function(response) {
             try {
-              console.log('Payment successful, verifying...', response);
-              
               // Verify payment on server
-              const verifyRes = await axios.post('http://localhost:5000/api/verify-payment',
+              const verifyRes = await axios.post(`${import.meta.env.VITE_API_URL}/api/verify-payment`,
                 {
                   razorpay_payment_id: response.razorpay_payment_id,
                   razorpay_order_id: response.razorpay_order_id,
@@ -74,8 +72,6 @@ export default function CreditPurchaseModal({ isOpen, onClose, darkMode, onPurch
                 },
                 { headers: { 'Authorization': `Bearer ${token}` } }
               );
-              
-              console.log('Verification response:', verifyRes.data);
               
               if (verifyRes.data.success) {
                 setPurchaseStatus('success');

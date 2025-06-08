@@ -28,7 +28,7 @@ export default function AnimationCanvas({ sketchCode, darkMode, duration, setDur
                 srcDoc={`
                   <html>
                     <head>
-                      <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://unpkg.com http://localhost:*">
+                      <meta http-equiv="Content-Security-Policy" content="default-src 'self' 'unsafe-inline' 'unsafe-eval' data: blob: https://cdnjs.cloudflare.com https://unpkg.com ${import.meta.env.VITE_FRONTEND_URL || 'http://localhost:*'}">
                       <style>
                         body { 
                           margin: 0;
