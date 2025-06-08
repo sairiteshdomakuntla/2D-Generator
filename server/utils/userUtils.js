@@ -3,20 +3,44 @@ const User = require('../models/User');
 // Helper function to find or create user
 exports.findOrCreateUser = async (userId, userEmail = 'user@example.com', userName = 'User') => {
   try {
+    // First, try to find the existing user
     let user = await User.findOne({ clerkId: userId });
     
     if (!user) {
-      user = new User({
-        clerkId: userId,
-        email: userEmail,
-        name: userName,
-        credits: 20, // Changed from 10 to 20 free credits
-        lastCreditRefresh: new Date()
-      });
-      await user.save();
-    } else if (user.credits === undefined) {
-      // If user exists but doesn't have credits field (migration case)
-      user.credits = 20; // Changed from 10 to 20
+      try {
+        // Use findOneAndUpdate with upsert to avoid race conditions
+        user = await User.findOneAndUpdate(
+          { clerkId: userId },
+          {
+            $setOnInsert: {
+              clerkId: userId,
+              email: userEmail,
+              name: userName,
+              credits: 20,
+              lastCreditRefresh: new Date()
+            }
+          },
+          { 
+            new: true, 
+            upsert: true,
+            runValidators: true
+          }
+        );
+      } catch (err) {
+        // If there's an error during upsert (likely a duplicate key error),
+        // try one more time to fetch the user that might have been created in parallel
+        if (err.code === 11000) { // Duplicate key error
+          user = await User.findOne({ clerkId: userId });
+          if (!user) throw err; // Re-throw if user still not found
+        } else {
+          throw err;
+        }
+      }
+    }
+    
+    // Ensure the user has credits set
+    if (user.credits === undefined) {
+      user.credits = 20;
       user.lastCreditRefresh = new Date();
       await user.save();
     }

@@ -9,6 +9,7 @@ export default function Credits({ darkMode, refreshTrigger, onBuyMore }) {
   const [credits, setCredits] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [retryCount, setRetryCount] = useState(0);
 
   const fetchCredits = async () => {
     try {
@@ -23,7 +24,19 @@ export default function Credits({ darkMode, refreshTrigger, onBuyMore }) {
       setError(null);
     } catch (err) {
       console.error('Error fetching credits:', err);
+      
+      // If we get a 500 error and haven't retried too many times, retry after a delay
+      if (err.response?.status === 500 && retryCount < 3) {
+        console.log(`Retrying credits fetch (attempt ${retryCount + 1})...`);
+        setTimeout(() => {
+          setRetryCount(prev => prev + 1);
+        }, 1000); // Wait 1 second before retry
+        return;
+      }
+      
       setError('Failed to load credits');
+      // Default to showing 20 credits for new users when there's an error
+      setCredits(20);
     } finally {
       setLoading(false);
     }
@@ -31,7 +44,7 @@ export default function Credits({ darkMode, refreshTrigger, onBuyMore }) {
 
   useEffect(() => {
     fetchCredits();
-  }, [refreshTrigger, getToken]);
+  }, [refreshTrigger, getToken, retryCount]);
 
   // Handle navigation directly in the component
   const handleBuyCredits = () => {
@@ -64,7 +77,7 @@ export default function Credits({ darkMode, refreshTrigger, onBuyMore }) {
           </svg>
         )}
         <span className="cursor-pointer">
-          {loading ? 'Loading...' : error ? 'Error' : `${credits} credits`}
+          {loading ? 'Loading...' : error ? '20 credits' : `${credits} credits`}
         </span>
       </div>
       
