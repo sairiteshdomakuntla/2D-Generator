@@ -172,6 +172,9 @@ function App() {
 
   // Handle selecting an animation from the sidebar
   const handleSelectAnimation = async (animationId) => {
+    if (!user || !isSignedIn) {
+      return;
+    }
     if (animationId === 'new') {
       setCurrentAnimation(null);
       setSketchCode('');

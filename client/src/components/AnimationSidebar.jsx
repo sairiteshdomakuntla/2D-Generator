@@ -1,17 +1,22 @@
 import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import { useAuth } from '@clerk/clerk-react';
+import { useAuth, useUser } from '@clerk/clerk-react';
 import axios from 'axios';
 
 export default function AnimationSidebar({ darkMode, currentAnimationId, onSelectAnimation, refreshTrigger }) {
   const [animations, setAnimations] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false); // Start with false
   const [error, setError] = useState(null);
-  const { getToken } = useAuth(); // Use Clerk's useAuth hook to get the getToken function
+  const { getToken } = useAuth();
+  const { isSignedIn, isLoaded } = useUser(); // Add this to check authentication status
   
-  // Add refreshTrigger to dependency array to fetch animations when it changes
   useEffect(() => {
     const fetchAnimations = async () => {
+      // Only fetch animations if the user is signed in
+      if (!isLoaded || !isSignedIn) {
+        setAnimations([]);
+        return;
+      }
+      
       try {
         setLoading(true);
         const token = await getToken();
@@ -24,16 +29,18 @@ export default function AnimationSidebar({ darkMode, currentAnimationId, onSelec
         
         setAnimations(response.data.animations);
       } catch (err) {
-        // Keep this error log as it's useful for troubleshooting
         console.error('Error fetching animations:', err);
-        setError('Failed to load your animations');
+        // Only set the error if it's not a 401 (expected when logged out)
+        if (err.response?.status !== 401) {
+          setError('Failed to load your animations');
+        }
       } finally {
         setLoading(false);
       }
     };
     
     fetchAnimations();
-  }, [refreshTrigger, getToken]); // Add getToken as a dependency
+  }, [refreshTrigger, getToken, isSignedIn, isLoaded]); // Add isSignedIn and isLoaded to dependency array
   
   // Format date to readable string
   const formatDate = (dateString) => {
