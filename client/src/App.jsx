@@ -281,6 +281,7 @@ function App() {
               sketchCode={sketchCode}
               currentAnimation={currentAnimation}
               videoUrl={videoUrl}
+              setVideoUrl={setVideoUrl}  // Add this missing prop
               handleExportVideo={handleExportVideo}
               handleKeyPress={handleKeyPress}
               duration={duration}
@@ -339,7 +340,7 @@ function MainLayout({ children, darkMode, setDarkMode, creditsRefreshTrigger }) 
 function Dashboard(props) {
   const {
     user, prompt, setPrompt, handleGenerate, isLoading, recordingVideo, error, setError,
-    userGreeting, sketchCode, currentAnimation, videoUrl, handleExportVideo, handleKeyPress, 
+    userGreeting, sketchCode, currentAnimation, videoUrl, setVideoUrl, handleExportVideo, handleKeyPress, 
     duration, setDuration, iframeRef, handleSelectAnimation, showSidebar, toggleSidebar, 
     sidebarRefreshTrigger, darkMode, messages, handleSendMessage, onCreditsPurchased
   } = props;
