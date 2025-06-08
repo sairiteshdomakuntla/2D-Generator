@@ -15,7 +15,7 @@ import PurchaseCredits from './pages/PurchaseCredits';
 
 
 function App() {
-  const { user } = useUser();
+  const { user, isSignedIn } = useUser();  // Add isSignedIn here
   const { getToken } = useAuth();
   const [prompt, setPrompt] = useState('');
   const [sketchCode, setSketchCode] = useState('');
